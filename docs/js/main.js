@@ -329,26 +329,29 @@ document.addEventListener("DOMContentLoaded", function () {
     for (const file of files) {
       const reader = new FileReader();
       reader.onload = function (e) {
-        const pxl = new pixelit();
-        pxl.setFromImgSource(e.target.result)
-          .setScale(blocksize.value)
-          .setPalette(paletteList[currentPalette])
-          .draw()
-          .pixelate();
+        const img = new Image();
+        img.src = e.target.result;
+        img.onload = function () {
+          const pxl = new pixelit();
+          pxl.setDrawFrom(img)
+            .setScale(blocksize.value)
+            .setPalette(paletteList[currentPalette])
+            .pixelate();
 
-        if (greyscale.checked) {
-          pxl.convertGrayscale();
-        }
-        if (palette.checked) {
-          pxl.convertPalette();
-        }
-        if (maxheight.value) {
-          pxl.setMaxHeight(maxheight.value).resizeImage();
-        }
-        if (maxwidth.value) {
-          pxl.setMaxWidth(maxwidth.value).resizeImage();
-        }
-        pxl.saveImage(file.name.split('.')[0] + '-pixelit.png');
+          if (greyscale.checked) {
+            pxl.convertGrayscale();
+          }
+          if (palette.checked) {
+            pxl.convertPalette();
+          }
+          if (maxheight.value) {
+            pxl.setMaxHeight(maxheight.value).resizeImage();
+          }
+          if (maxwidth.value) {
+            pxl.setMaxWidth(maxwidth.value).resizeImage();
+          }
+          pxl.saveImage(file.name.split('.')[0] + '-pixelit.png');
+        };
       };
       reader.readAsDataURL(file);
     }
