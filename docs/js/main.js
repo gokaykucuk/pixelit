@@ -139,8 +139,7 @@ let paletteList = [
   ],
 ];
 let currentPalette = 0;
-//let maxPalette = paletteList.length;
-
+let processedImages = [];
 
 //*** add palette to custom list
 const addPalette = (palette=[]) => {
@@ -152,7 +151,6 @@ const addPalette = (palette=[]) => {
 
 //*** update from localstorage
 const pullFromLocalStorage = () => {
-  //*** cards
   let data = JSON.parse(localStorage.getItem("customPalettes"));
   if (data == null) data = [];
   return data;
@@ -172,26 +170,52 @@ const removeDuplicates = (arr) => {
       unique_array.push(arr[i]);
     }
   }
-return unique_array;
+  return unique_array;
 };
 
 
 document.addEventListener("DOMContentLoaded", function () {
   //load image to canvas
   document.getElementById("pixlInput").onchange = function (e) {
-    var img = new Image();
-    img.src = URL.createObjectURL(this.files[0]);
-    img.onload = () => {
-      //create element
-      //document.getElementById('teste').src = img.src;
-      px.setFromImgSource(img.src);
-      pixelit();
-      //.pixelate()
-      //.convertGrayscale()
-      //.convertPalette();
-      //.saveImage();
-      //console.log(px.getPalette());
-    };
+    processedImages = [];
+    const files = e.target.files;
+    if (!files.length) {
+      return;
+    }
+    document.querySelector(".loader").classList.toggle("active");
+    
+    Array.from(files).forEach((file, index) => {
+      const img = new Image();
+      img.src = URL.createObjectURL(file);
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const px = new pixelit({ from: img, to: canvas });
+        px.setScale(blocksize.value)
+          .setPalette(paletteList[currentPalette])
+          .draw()
+          .pixelate();
+
+        greyscale.checked ? px.convertGrayscale() : null;
+        palette.checked ? px.convertPalette() : null;
+        maxheight.value ? px.setMaxHeight(maxheight.value).resizeImage() : null;
+        maxwidth.value ? px.setMaxWidth(maxwidth.value).resizeImage() : null;
+        
+        processedImages.push({
+            name: file.name,
+            canvas: canvas
+        });
+
+        if (index === files.length - 1) {
+            document.querySelector(".loader").classList.toggle("active");
+            // Display first image as preview
+            const previewCanvas = document.getElementById('pixelitcanvas');
+            const previewCtx = previewCanvas.getContext('2d');
+            previewCanvas.width = processedImages[0].canvas.width;
+            previewCanvas.height = processedImages[0].canvas.height;
+            previewCtx.drawImage(processedImages[0].canvas, 0, 0);
+        }
+      };
+    });
   };
 
   //add color to palette
@@ -202,7 +226,6 @@ document.addEventListener("DOMContentLoaded", function () {
     colorSpan.style.backgroundColor = color;
     colorSpan.dataset.color = rgbToInt(color).join(',');
     colorSpan.classList.add('colorblock');
-    //console.log(colorSpan);
     document.getElementById('currentpallete').appendChild(colorSpan);
   });
   //save custom palette
@@ -213,13 +236,10 @@ document.addEventListener("DOMContentLoaded", function () {
     colors.forEach((color) => {
       palette.push(color.dataset.color);
     });
-    //console.log(palette);
-    //remove duplicates and make array of string
     palette = removeDuplicates(palette).map((color) => {
       return color.split(',');
     });
     addPalette(palette);
-    //remove all children from element
     const currentPalette = document.getElementById('currentpallete');
     while (currentPalette.firstChild) {
       currentPalette.removeChild(currentPalette.firstChild);
@@ -234,19 +254,21 @@ document.addEventListener("DOMContentLoaded", function () {
 
   //function to apply effects
   const pixelit = () => {
-    document.querySelector(".loader").classList.toggle("active");
-    setTimeout(() => {
-      document.querySelector(".loader").classList.toggle("active");
-    }, 800);
-    px.setScale(blocksize.value)
-      .setPalette(paletteList[currentPalette])
-      .draw()
-      .pixelate();
+    if (processedImages.length === 0) {
+        document.querySelector(".loader").classList.toggle("active");
+        setTimeout(() => {
+          document.querySelector(".loader").classList.toggle("active");
+        }, 800);
+        px.setScale(blocksize.value)
+          .setPalette(paletteList[currentPalette])
+          .draw()
+          .pixelate();
 
-    greyscale.checked ? px.convertGrayscale() : null;
-    palette.checked ? px.convertPalette() : null;
-    maxheight.value ? px.setMaxHeight(maxheight.value).resizeImage() : null;
-    maxwidth.value ? px.setMaxWidth(maxwidth.value).resizeImage() : null;
+        greyscale.checked ? px.convertGrayscale() : null;
+        palette.checked ? px.convertPalette() : null;
+        maxheight.value ? px.setMaxHeight(maxheight.value).resizeImage() : null;
+        maxwidth.value ? px.setMaxWidth(maxwidth.value).resizeImage() : null;
+    }
   };
 
 
@@ -265,14 +287,11 @@ document.addEventListener("DOMContentLoaded", function () {
         let div = document.createElement("div");
         div.classList = "colorblock";
         div.style.backgroundColor = `rgba(${elem[0]},${elem[1]},${elem[2]},1)`;
-        //div.innerHTML = `<div class="colorblock" style="background-color: rgba(${elem[0]},${elem[1]},${elem[2]},1)"></div>`;
         option.appendChild(div);
-        //pdivs += `<div class="colorblock" style="background-color: rgba(${elem[0]},${elem[1]},${elem[2]},1)"></div>`;
       });
       document.getElementById("paletteselector").appendChild(option);
     });
 
-    //document.querySelector('#palettecolor').innerHTML = pdivs;
   };
 
   makePaletteGradient();
@@ -285,7 +304,6 @@ document.addEventListener("DOMContentLoaded", function () {
       currentPalette = info.value;
       palette.checked = true;
       pixelit();
-      //console.log(info)
     },
   });
 
@@ -307,22 +325,29 @@ document.addEventListener("DOMContentLoaded", function () {
   //maxwidth
   const maxwidth = document.querySelector("#maxwidth");
   maxwidth.addEventListener("change", pixelit);
-  //change palette deprecated
-  /*
-  const changePalette = document.querySelector("#changepalette");
-  changePalette.addEventListener("click", function (e) {
-    currentPalette > 0 ? currentPalette-- : (currentPalette = maxPalette - 1);
-    makePaletteGradient();
-    palette.checked = true;
-    pixelit();
-  });
-  */
+
   //downloadimage options
   const downloadimage = document.querySelector("#downloadimage");
 
   downloadimage.addEventListener("click", function (e) {
-    //download image
-    px.saveImage();
+    if (processedImages.length > 0) {
+        const zip = new JSZip();
+        processedImages.forEach((imgData, index) => {
+            const imgBlob = imgData.canvas.toDataURL("image/png");
+            zip.file(`pixelated-${imgData.name}`, imgBlob.substr(imgBlob.indexOf(',') + 1), {base64: true});
+        });
+
+        zip.generateAsync({type:"blob"}).then(function(content) {
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(content);
+            link.download = "pixelated_images.zip";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+    } else {
+        px.saveImage();
+    }
   });
 
   //run on page boot to pixelit default image

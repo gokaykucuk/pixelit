@@ -53,7 +53,7 @@
 <div class="container maxwidth" id="tryit">
   <div class="selectors">
     <!--upload image -->
-    <label id="uploadimage" for="pixlInput">Upload Image<input type="file" class="inputbtn" id="pixlInput"></label>
+    <label id="uploadimage" for="pixlInput">Upload Images<input type="file" class="inputbtn" id="pixlInput" multiple></label>
     <!-- block size -->
     <label for="blocksize" class="inputbtn">Block size<span id="blockvalue">7</span><input value="7" type="range" min="2" max="25" id="blocksize"></label>
     <!-- greyscale -->
@@ -92,7 +92,7 @@
    </div>
    <div class="dothings">
    <!-- download image -->
-   <Button id="downloadimage" class="btn small call">Download Image</Button>
+   <Button id="downloadimage" class="btn small call">Download Images as Zip</Button>
    </div>
    
   </div>
@@ -165,6 +165,7 @@ config = {
   </div></section>
   <img src="assets/sky.jpg"  id="pixelitimg" alt="">
   <!--<img style="visibility: hidden;" id="pixlimg" alt="">  -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="js/pixelit.min.js"></script>
   <script src="js/slim.select.min.js"></script>
   <script src="js/main.min.js?v1"></script>
