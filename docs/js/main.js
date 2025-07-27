@@ -177,21 +177,13 @@ return unique_array;
 
 
 document.addEventListener("DOMContentLoaded", function () {
-  //load image to canvas
-  document.getElementById("pixlInput").onchange = function (e) {
-    var img = new Image();
-    img.src = URL.createObjectURL(this.files[0]);
-    img.onload = () => {
-      //create element
-      //document.getElementById('teste').src = img.src;
-      px.setFromImgSource(img.src);
-      pixelit();
-      //.pixelate()
-      //.convertGrayscale()
-      //.convertPalette();
-      //.saveImage();
-      //console.log(px.getPalette());
-    };
+  document.getElementById('pixlInput').onchange = function (e) {
+    if (e.target.files && e.target.files.length > 0) {
+      for (const file of e.target.files) {
+        const pxl = new pixelit();
+        pxl.setFromImgSource(URL.createObjectURL(file)).pixelate().convertPalette().saveImage();
+      }
+    }
   };
 
   //add color to palette
@@ -317,12 +309,33 @@ document.addEventListener("DOMContentLoaded", function () {
     pixelit();
   });
   */
-  //downloadimage options
   const downloadimage = document.querySelector("#downloadimage");
 
   downloadimage.addEventListener("click", function (e) {
-    //download image
-    px.saveImage();
+    const zip = new JSZip();
+    const files = document.getElementById("pixlInput").files;
+    if (!files.length) {
+      alert("Please select a file first.");
+      return;
+    }
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const pxl = new pixelit();
+        pxl.setFromImgSource(e.target.result).pixelate().convertPalette();
+        const canvas = pxl.draw().getCanvas();
+        canvas.toBlob(function (blob) {
+          zip.file(`${file.name.split('.')[0]}-pixelit.png`, blob);
+          if (i === files.length - 1) {
+            zip.generateAsync({ type: "blob" }).then(function (content) {
+              saveAs(content, "pixelit.zip");
+            });
+          }
+        });
+      };
+      reader.readAsDataURL(file);
+    }
   });
 
   //run on page boot to pixelit default image
