@@ -317,12 +317,41 @@ document.addEventListener("DOMContentLoaded", function () {
     pixelit();
   });
   */
-  //downloadimage options
   const downloadimage = document.querySelector("#downloadimage");
 
   downloadimage.addEventListener("click", function (e) {
-    //download image
-    px.saveImage();
+    const files = document.getElementById("pixlInput").files;
+    if (!files.length) {
+      alert("Please select at least one file.");
+      return;
+    }
+
+    for (const file of files) {
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const pxl = new pixelit();
+        pxl.setFromImgSource(e.target.result)
+          .setScale(blocksize.value)
+          .setPalette(paletteList[currentPalette])
+          .draw()
+          .pixelate();
+
+        if (greyscale.checked) {
+          pxl.convertGrayscale();
+        }
+        if (palette.checked) {
+          pxl.convertPalette();
+        }
+        if (maxheight.value) {
+          pxl.setMaxHeight(maxheight.value).resizeImage();
+        }
+        if (maxwidth.value) {
+          pxl.setMaxWidth(maxwidth.value).resizeImage();
+        }
+        pxl.saveImage(file.name.split('.')[0] + '-pixelit.png');
+      };
+      reader.readAsDataURL(file);
+    }
   });
 
   //run on page boot to pixelit default image
